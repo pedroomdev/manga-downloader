@@ -13,3 +13,7 @@ Download and convert mangakakalot manga chapter urls into pdfs
 ./go run - Runs the manga_downloader.py script
 
 ./go - Shows the help commands
+
+# usage
+
+run ./go setup and then ./go run to run the script
