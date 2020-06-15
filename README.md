@@ -2,6 +2,10 @@
 
 Download and convert mangakakalot manga chapter urls into pdfs
 
+# requirements
+
+- Docker
+
 # commands
 
 ./go setup - Builds the docker image
