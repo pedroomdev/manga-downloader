@@ -9,6 +9,7 @@ function helptext {
 }
  
 function setup {
+  docker rmi -f manga-downloader_manga_downloader
   docker-compose build manga_downloader
 }
  
