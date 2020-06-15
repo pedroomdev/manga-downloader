@@ -7,7 +7,7 @@ from PIL import Image
 
 http = urllib3.PoolManager()
 page = http.urlopen(
-    'GET', 'https://read.mangabat.com/read-dt34668-chap-180')
+    'GET', 'https://read-claymore-online.com/claymore-chapter-1/')
 soup = BeautifulSoup(page.data, 'html.parser')
 tags = soup.find_all('img')
 
@@ -22,9 +22,9 @@ for img in tags:
         while True:
             data = r.read()
             if not data:
+                i += 1
                 break
             out.write(data)
-    i += 1
 
 current_dir = "."
 pdf = FPDF()
@@ -52,7 +52,7 @@ for j in range(0, i):
     except:
         print("error reading one of the iamges on fpdf")
 
-pdf.output("yakusoku-180.pdf", "F")
+pdf.output("claymore-1.pdf", "F")
 
 # clean folder jpg
 filelist = [ f for f in os.listdir(current_dir) if f.endswith(".jpg") ]
