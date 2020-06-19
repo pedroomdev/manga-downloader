@@ -4,57 +4,78 @@ from bs4 import BeautifulSoup
 import os
 from fpdf import FPDF
 from PIL import Image
+import sys
+import os
 
-http = urllib3.PoolManager()
-page = http.urlopen(
-    'GET', 'https://read-claymore-online.com/claymore-chapter-1/')
-soup = BeautifulSoup(page.data, 'html.parser')
-tags = soup.find_all('img')
+def readUrlContent(httpManager, url):
+    page = httpManager.urlopen('GET', url)
+    return page.data
 
-i = 0
+def createJpgMangaImages(httpManager, pageContent, keyword):
+    soup = BeautifulSoup(pageContent, 'html.parser')
+    tags = soup.find_all('img')
 
-# get all of the images urls and create image from content
-for img in tags:
-    img_url = img.get('src')
-    print(img_url)
-    r = http.urlopen('GET', img_url, preload_content=False)
-    with open(f"{i}.jpg", 'wb') as out:
-        while True:
-            data = r.read()
-            if not data:
-                i += 1
-                break
-            out.write(data)
+    i = 0
 
-current_dir = "."
-pdf = FPDF()
+    # get all of the images urls and create image from content
+    for img in tags:
+        img_url = img.get('src')
+        if keyword in img_url:
+            r = httpManager.urlopen('GET', img_url, preload_content=False)
+            with open(f"{i}.jpg", 'wb') as out:
+                while True:
+                    data = r.read()
+                    if not data:
+                        i += 1
+                        break
+                    out.write(data)
 
-for j in range(0, i):
-    im = Image.open(f"{j}.jpg")
-    width, height = im.size
-    print(f"width: {width} - height: {height}")
+    return i
 
-    # convert pixel in mm with 1px=0.264583 mm, mm is default for FPDF
-    width, height = float(width * 0.264583), float(height * 0.264583)
+def createPDFFromImages(endIndex, mangaChapter):
+    print(mangaChapter)
+    pdf = FPDF()
 
-    # given we are working with A4 format size on pdf
-    pdf_size = {'P': {'w': 210, 'h': 297}, 'L': {'w': 297, 'h': 210}}
+    for j in range(0, endIndex):
+        im = Image.open(f"{j}.jpg")
+        width, height = im.size
 
-    orientation = 'P' if width < height else 'L'
+        # convert pixel in mm with 1px=0.264583 mm, mm is default for FPDF
+        width, height = float(width * 0.264583), float(height * 0.264583)
 
-    #  make sure image size is not greater than the pdf format size
-    width = width if width < pdf_size[orientation]['w'] else pdf_size[orientation]['w']
-    height = height if height < pdf_size[orientation]['h'] else pdf_size[orientation]['h']
+        # given we are working with A4 format size on pdf
+        pdf_size = {'P': {'w': 210, 'h': 297}, 'L': {'w': 297, 'h': 210}}
 
-    try:
-        pdf.add_page(orientation=orientation)
-        pdf.image(f"{j}.jpg", 0, 0, width, height)
-    except:
-        print("error reading one of the iamges on fpdf")
+        orientation = 'P' if width < height else 'L'
 
-pdf.output("claymore-1.pdf", "F")
+        #  make sure image size is not greater than the pdf format size
+        width = width if width < pdf_size[orientation]['w'] else pdf_size[orientation]['w']
+        height = height if height < pdf_size[orientation]['h'] else pdf_size[orientation]['h']
 
-# clean folder jpg
-filelist = [ f for f in os.listdir(current_dir) if f.endswith(".jpg") ]
-for f in filelist:
-    os.remove(os.path.join(current_dir, f))
+        try:
+            pdf.add_page(orientation=orientation)
+            pdf.image(f"{j}.jpg", 0, 0, width, height)
+        except:
+            print("error reading one of the iamges on fpdf")
+
+    pdf.output(mangaChapter, "F")
+
+def cleanTempFiles():
+    current_dir = "."
+
+    # clean folder jpg
+    filelist = [ f for f in os.listdir(current_dir) if f.endswith(".jpg") ]
+    for f in filelist:
+        os.remove(os.path.join(current_dir, f))
+
+def extractNameFromUrl(url):
+    splitted_url = url.split('/')
+    return f"{splitted_url[-1]}.pdf"
+
+keyword = os.environ['KEYWORD']
+url = os.environ['URL']
+httpManager = urllib3.PoolManager()
+pageContent = readUrlContent(httpManager, url)
+lastFileIndex = createJpgMangaImages(httpManager, pageContent, '')
+createPDFFromImages(lastFileIndex, extractNameFromUrl(url))
+cleanTempFiles()

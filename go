@@ -14,7 +14,9 @@ function setup {
 }
  
 function run {
-  docker-compose run manga_downloader
+  URL=$2
+  KEYWORD=$3
+  docker-compose run -e URL=$URL -e KEYWORD=$KEYWORD manga_downloader 
 }
  
 case "$1" in
@@ -22,7 +24,7 @@ case "$1" in
       setup
     ;;
     run)
-      run
+      run $@
     ;;
     *) helptext
     ;;
