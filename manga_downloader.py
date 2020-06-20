@@ -20,20 +20,20 @@ def createJpgMangaImages(httpManager, pageContent, keyword):
     # get all of the images urls and create image from content
     for img in tags:
         img_url = img.get('src')
-        if keyword in img_url:
-            r = httpManager.urlopen('GET', img_url, preload_content=False)
-            with open(f"{i}.jpg", 'wb') as out:
-                while True:
-                    data = r.read()
-                    if not data:
-                        i += 1
-                        break
-                    out.write(data)
+        #if keyword in img_url:
+        r = httpManager.urlopen('GET', img_url, preload_content=False)
+        image_extension = img_url.split(".")[-1]
+        with open(f"{i}.jpg", 'wb') as out:
+            while True:
+                data = r.read()
+                if not data:
+                    i += 1
+                    break
+                out.write(data)
 
-    return i
+    return i, image_extension
 
-def createPDFFromImages(endIndex, mangaChapter):
-    print(mangaChapter)
+def createPDFFromImages(endIndex, mangaChapter, image_extension):
     pdf = FPDF()
 
     for j in range(0, endIndex):
@@ -55,8 +55,8 @@ def createPDFFromImages(endIndex, mangaChapter):
         try:
             pdf.add_page(orientation=orientation)
             pdf.image(f"{j}.jpg", 0, 0, width, height)
-        except:
-            print("error reading one of the iamges on fpdf")
+        except Exception as e:
+            print(e)
 
     pdf.output(mangaChapter, "F")
 
@@ -77,5 +77,5 @@ url = os.environ['URL']
 httpManager = urllib3.PoolManager()
 pageContent = readUrlContent(httpManager, url)
 lastFileIndex = createJpgMangaImages(httpManager, pageContent, '')
-createPDFFromImages(lastFileIndex, extractNameFromUrl(url))
+createPDFFromImages(lastFileIndex[0], extractNameFromUrl(url), lastFileIndex[1])
 cleanTempFiles()
